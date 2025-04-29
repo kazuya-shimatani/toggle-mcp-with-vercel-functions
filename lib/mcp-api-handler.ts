@@ -7,6 +7,7 @@ import { createClient } from "redis";
 import { Socket } from "net";
 import { Readable } from "stream";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
+import vercelJson from "../vercel.json";
 
 interface SerializedRequest {
   requestId: string;
@@ -20,34 +21,17 @@ export function initializeMcpApiHandler(
   initializeServer: (server: McpServer) => void,
   serverOptions: ServerOptions = {}
 ) {
-  const maxDuration = process.env.MAX_DURATION ? parseInt(process.env.MAX_DURATION) : 800;
+  const maxDuration =
+    vercelJson?.functions?.["api/server.ts"]?.maxDuration || 800;
   const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
   if (!redisUrl) {
     throw new Error("REDIS_URL environment variable is not set");
   }
   const redis = createClient({
     url: redisUrl,
-    socket: {
-      connectTimeout: 10000,
-      reconnectStrategy: (retries) => {
-        if (retries > 3) {
-          return new Error("Max retries reached");
-        }
-        return Math.min(retries * 1000, 5000);
-      },
-    },
   });
   const redisPublisher = createClient({
     url: redisUrl,
-    socket: {
-      connectTimeout: 10000,
-      reconnectStrategy: (retries) => {
-        if (retries > 3) {
-          return new Error("Max retries reached");
-        }
-        return Math.min(retries * 1000, 5000);
-      },
-    },
   });
   redis.on("error", (err) => {
     console.error("Redis error", err);
@@ -114,10 +98,10 @@ export function initializeMcpApiHandler(
         await statelessServer.connect(statelessTransport);
       }
       await statelessTransport.handleRequest(req, res);
-    } else if (url.pathname === "/api/sse") {
+    } else if (url.pathname === "/sse") {
       console.log("Got new SSE connection");
 
-      const transport = new SSEServerTransport("/api/message", res);
+      const transport = new SSEServerTransport("/message", res);
       const sessionId = transport.sessionId;
       const server = new McpServer(
         {
@@ -311,22 +295,35 @@ function createFakeIncomingMessage(
     socket = new Socket(),
   } = options;
 
-  const req = new IncomingMessage(socket);
-  req.method = method;
-  req.url = url;
-  req.headers = headers;
+  // Create a readable stream that will be used as the base for IncomingMessage
+  const readable = new Readable();
+  readable._read = (): void => {}; // Required implementation
 
   // Add the body content if provided
   if (body) {
     if (typeof body === "string") {
-      req.push(body);
+      readable.push(body);
     } else if (Buffer.isBuffer(body)) {
-      req.push(body);
+      readable.push(body);
     } else {
-      req.push(JSON.stringify(body));
+      readable.push(JSON.stringify(body));
     }
-    req.push(null);
+    readable.push(null); // Signal the end of the stream
   }
+
+  // Create the IncomingMessage instance
+  const req = new IncomingMessage(socket);
+
+  // Set the properties
+  req.method = method;
+  req.url = url;
+  req.headers = headers;
+
+  // Copy over the stream methods
+  req.push = readable.push.bind(readable);
+  req.read = readable.read.bind(readable);
+  req.on = readable.on.bind(readable);
+  req.pipe = readable.pipe.bind(readable);
 
   return req;
 }

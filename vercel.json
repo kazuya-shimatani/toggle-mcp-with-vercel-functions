@@ -1,30 +1,8 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+  "rewrites": [{ "source": "/(.+)", "destination": "/api/server" }],
+  "functions": {
+    "api/server.ts": {
+      "maxDuration": 60
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/server",
-      "dest": "/api/server.js"
-    },
-    {
-      "src": "/api/mcp",
-      "dest": "/api/server.js"
-    },
-    {
-      "src": "/api/sse",
-      "dest": "/api/server.js"
-    },
-    {
-      "src": "/api/message",
-      "dest": "/api/server.js"
-    }
-  ]
+  }
 }
