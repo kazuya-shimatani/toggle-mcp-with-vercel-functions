@@ -7,7 +7,6 @@ import { createClient } from "redis";
 import { Socket } from "net";
 import { Readable } from "stream";
 import { ServerOptions } from "@modelcontextprotocol/sdk/server/index.js";
-import vercelJson from "../vercel.json";
 
 interface SerializedRequest {
   requestId: string;
@@ -21,17 +20,34 @@ export function initializeMcpApiHandler(
   initializeServer: (server: McpServer) => void,
   serverOptions: ServerOptions = {}
 ) {
-  const maxDuration =
-    vercelJson?.functions?.["api/server.ts"]?.maxDuration || 800;
+  const maxDuration = process.env.MAX_DURATION ? parseInt(process.env.MAX_DURATION) : 800;
   const redisUrl = process.env.REDIS_URL || process.env.KV_URL;
   if (!redisUrl) {
     throw new Error("REDIS_URL environment variable is not set");
   }
   const redis = createClient({
     url: redisUrl,
+    socket: {
+      connectTimeout: 10000,
+      reconnectStrategy: (retries) => {
+        if (retries > 3) {
+          return new Error("Max retries reached");
+        }
+        return Math.min(retries * 1000, 5000);
+      },
+    },
   });
   const redisPublisher = createClient({
     url: redisUrl,
+    socket: {
+      connectTimeout: 10000,
+      reconnectStrategy: (retries) => {
+        if (retries > 3) {
+          return new Error("Max retries reached");
+        }
+        return Math.min(retries * 1000, 5000);
+      },
+    },
   });
   redis.on("error", (err) => {
     console.error("Redis error", err);
