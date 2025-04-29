@@ -40,7 +40,13 @@ const mcpHandler = initializeMcpApiHandler(
   }
 );
 
-export default async function (req: VercelRequest, res: VercelResponse) {
+export default async function(req: VercelRequest, res: VercelResponse) {
+  if (req.method === 'GET') {
+    return res.status(405).json({
+      error: 'Method not allowed'
+    });
+  }
+  
   try {
     await mcpHandler(req as unknown as IncomingMessage, res as unknown as ServerResponse);
   } catch (error) {
