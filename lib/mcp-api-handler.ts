@@ -114,10 +114,10 @@ export function initializeMcpApiHandler(
         await statelessServer.connect(statelessTransport);
       }
       await statelessTransport.handleRequest(req, res);
-    } else if (url.pathname === "/sse") {
+    } else if (url.pathname === "/api/sse") {
       console.log("Got new SSE connection");
 
-      const transport = new SSEServerTransport("/message", res);
+      const transport = new SSEServerTransport("/api/message", res);
       const sessionId = transport.sessionId;
       const server = new McpServer(
         {

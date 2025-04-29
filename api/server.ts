@@ -41,10 +41,14 @@ const mcpHandler = initializeMcpApiHandler(
 );
 
 export default async function(req: VercelRequest, res: VercelResponse) {
-  if (req.method === 'GET') {
-    return res.status(405).json({
-      error: 'Method not allowed'
-    });
+  const url = new URL(req.url || '', `https://${req.headers.host}`);
+  
+  if (url.pathname === '/api/sse') {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.flushHeaders();
   }
   
   try {
