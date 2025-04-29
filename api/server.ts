@@ -42,10 +42,11 @@ const mcpHandler = initializeMcpApiHandler(
 
 export default async function (req: VercelRequest, res: VercelResponse) {
   try {
-    const result = await mcpHandler(req as unknown as IncomingMessage, res as unknown as ServerResponse);
-    res.status(200).json(result);
+    await mcpHandler(req as unknown as IncomingMessage, res as unknown as ServerResponse);
   } catch (error) {
     console.error('Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    if (!res.headersSent) {
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
   }
 }
