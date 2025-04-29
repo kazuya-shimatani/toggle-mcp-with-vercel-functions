@@ -311,35 +311,22 @@ function createFakeIncomingMessage(
     socket = new Socket(),
   } = options;
 
-  // Create a readable stream that will be used as the base for IncomingMessage
-  const readable = new Readable();
-  readable._read = (): void => {}; // Required implementation
-
-  // Add the body content if provided
-  if (body) {
-    if (typeof body === "string") {
-      readable.push(body);
-    } else if (Buffer.isBuffer(body)) {
-      readable.push(body);
-    } else {
-      readable.push(JSON.stringify(body));
-    }
-    readable.push(null); // Signal the end of the stream
-  }
-
-  // Create the IncomingMessage instance
   const req = new IncomingMessage(socket);
-
-  // Set the properties
   req.method = method;
   req.url = url;
   req.headers = headers;
 
-  // Copy over the stream methods
-  req.push = readable.push.bind(readable);
-  req.read = readable.read.bind(readable);
-  req.on = readable.on.bind(readable);
-  req.pipe = readable.pipe.bind(readable);
+  // Add the body content if provided
+  if (body) {
+    if (typeof body === "string") {
+      req.push(body);
+    } else if (Buffer.isBuffer(body)) {
+      req.push(body);
+    } else {
+      req.push(JSON.stringify(body));
+    }
+    req.push(null);
+  }
 
   return req;
 }
