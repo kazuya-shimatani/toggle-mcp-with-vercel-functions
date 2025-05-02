@@ -6,8 +6,8 @@ const TOGGL_TRACK_API_BASE_URL = 'https://api.track.toggl.com/api/v9';
 const toJSTDayRangeUTC = (dateStr: string) => {
   // JST 00:00:00
   const startJST = new Date(`${dateStr}T00:00:00+09:00`);
-  // JST 23:59:59
-  const endJST = new Date(`${dateStr}T23:59:59+09:00`);
+  // JST 23:59:59.999
+  const endJST = new Date(`${dateStr}T23:59:59.999+09:00`);
   return {
     startUTC: startJST.toISOString(),
     endUTC: endJST.toISOString(),
