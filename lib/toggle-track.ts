@@ -2,7 +2,17 @@ import axios from 'axios';
 
 const TOGGL_TRACK_API_BASE_URL = 'https://api.track.toggl.com/api/v9';
 
-const toUTCISOString = (date: Date) => (new Date(date.getTime() - (9 * 60 * 60 * 1000))).toISOString();
+// JSTの1日をカバーするUTC範囲を返す
+const toJSTDayRangeUTC = (dateStr: string) => {
+  // JST 00:00:00
+  const startJST = new Date(`${dateStr}T00:00:00+09:00`);
+  // JST 23:59:59
+  const endJST = new Date(`${dateStr}T23:59:59+09:00`);
+  return {
+    startUTC: startJST.toISOString(),
+    endUTC: endJST.toISOString(),
+  };
+};
 
 export class TogglTrackClient {
   private apiToken: string;
@@ -20,19 +30,22 @@ export class TogglTrackClient {
 
   async getTotalMonthlyDuration(inputStartDate?: string, inputEndDate?: string) {
     const now = new Date();
-    const startDate = toUTCISOString(inputStartDate ? new Date(inputStartDate) : new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59));
-    const endDate = toUTCISOString(inputEndDate ? new Date(new Date(inputEndDate).setHours(23, 59, 59, 999)) : new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999));
+    const start = inputStartDate ? inputStartDate : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`;
+    const end = inputEndDate ? inputEndDate : `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate()}`;
 
-    console.log(`startDate: ${startDate}`);
-    console.log(`endDate: ${endDate}`);
+    const { startUTC } = toJSTDayRangeUTC(start);
+    const { endUTC: endOfEndUTC } = toJSTDayRangeUTC(end);
+
+    console.log(`startDate: ${startUTC}`);
+    console.log(`endDate: ${endOfEndUTC}`);
 
     const response = await axios.get(`${TOGGL_TRACK_API_BASE_URL}/me/time_entries`, {
-        headers: this.getAuthHeader(),
-        params: {
-          start_date: startDate,
-          end_date: endDate,
-        },
-      });
+      headers: this.getAuthHeader(),
+      params: {
+        start_date: startUTC,
+        end_date: endOfEndUTC,
+      },
+    });
 
     return response.data;
   }
