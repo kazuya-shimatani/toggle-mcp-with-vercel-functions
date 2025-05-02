@@ -255,7 +255,7 @@ export function initializeMcpApiHandler(
         `requests:${sessionId}`,
         JSON.stringify(serializedRequest)
       );
-      console.log(`Published requests:${sessionId}`, serializedRequest);
+      console.log(`Published requests:${sessionId}`);
 
       let timeout = setTimeout(async () => {
         await redis.unsubscribe(`responses:${sessionId}:${requestId}`);

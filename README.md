@@ -2,21 +2,25 @@
 
 ## Usage
 
-Update `api/server.ts` with your tools, prompts, and resources following the [MCP TypeScript SDK documentation](https://github.com/modelcontextprotocol/typescript-sdk/tree/main?tab=readme-ov-file#server).
+This MCP server exposes a tool called `getTimeEntries` for retrieving Toggl time entries for a specified period.
 
-[There is also a Next.js version of this template](https://vercel.com/templates/next.js/model-context-protocol-mcp-with-next-js)
+### Tool: getTimeEntries
 
-## Notes for running on Vercel
+**Parameters:**
+- `togglApiToken` (string, required): Your Toggl API token
+- `startDate` (string, required): Start date in `YYYY-MM-DD` format
+- `endDate` (string, required): End date in `YYYY-MM-DD` format
 
-- Requires a Redis attached to the project under `process.env.REDIS_URL`
-- Make sure you have [Fluid compute](https://vercel.com/docs/functions/fluid-compute) enabled for efficient execution
-- After enabling Fluid compute, open `vercel.json` and adjust max duration to 800 if you using a Vercel Pro or Enterprise account
-- [Deploy the MCP template](https://vercel.com/templates/other/model-context-protocol-mcp-with-vercel-functions)
-
-## Sample Client
-
-`script/test-client.mjs` contains a sample client to try invocations.
-
-```sh
-node scripts/test-client.mjs https://mcp-on-vercel.vercel.app
+**Example request:**
+```json
+{
+  "method": "getTimeEntries",
+  "params": {
+    "togglApiToken": "your_toggl_api_token",
+    "startDate": "2025-04-01",
+    "endDate": "2025-04-30"
+  }
+}
 ```
+
+
