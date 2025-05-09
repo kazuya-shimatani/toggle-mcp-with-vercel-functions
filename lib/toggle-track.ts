@@ -47,6 +47,28 @@ export class TogglTrackClient {
       },
     });
 
-    return response.data;
+    const totalSeconds = this.getTotalDurationSeconds(response.data);
+    const formattedTime = this.formatSecondsToHHMMSS(totalSeconds);
+    return formattedTime;
   }
-} 
+
+  // 月間合計作業秒数を取得するメソッド
+  private getTotalDurationSeconds(timeEntries: { duration: number }[]): number {
+    return timeEntries.reduce((sum, entry) => {
+      // durationが負の場合（タイマーが動作中）は除外
+      if (typeof entry.duration === 'number' && entry.duration > 0) {
+        return sum + entry.duration;
+      }
+      return sum;
+    }, 0);
+  }
+
+  private formatSecondsToHHMMSS(totalSeconds: number): string {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    return `${hours.toString().padStart(2, '0')}:`
+      + `${minutes.toString().padStart(2, '0')}:`
+      + `${seconds.toString().padStart(2, '0')}`;
+  }
+}
